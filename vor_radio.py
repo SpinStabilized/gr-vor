@@ -5,7 +5,7 @@
 # Title: VOR Radio
 # Author: Brian McLaughlin
 # Description: Decodes a VOR signal
-# Generated: Fri Dec 16 07:08:07 2016
+# Generated: Fri Dec 16 16:03:17 2016
 ##################################################
 
 if __name__ == '__main__':
@@ -65,10 +65,20 @@ class vor_radio(gr.top_block, Qt.QWidget):
         ##################################################
         # Variables
         ##################################################
-        self.signal_f = signal_f = 30
-        self.samp_rate = samp_rate = 2**15
-        self.fm_freq = fm_freq = 9960
-        self.fm_deviation = fm_deviation = 480
+        self.tone_samp_rate = tone_samp_rate = 2**9
+        self.tone_freq = tone_freq = 30
+        self.tone_bandpass_width = tone_bandpass_width = 5
+        self.pll_tracking_range = pll_tracking_range = 100
+        self.pll_bandwidth = pll_bandwidth = (1.5 * math.pi)/200
+        self.input_samp_rate = input_samp_rate = 2**15
+        self.ident_freq = ident_freq = 1020
+        self.fm_ref_freq = fm_ref_freq = 9960
+        self.fm_ref_deviation = fm_ref_deviation = 480
+        self.fm_lowpass_width = fm_lowpass_width = 1000
+        self.fm_lowpass_cutoff = fm_lowpass_cutoff = 5000
+        self.fm_demod_samp_rate = fm_demod_samp_rate = 2**12
+        self.am_demod_lowpass_width = am_demod_lowpass_width = 400
+        self.am_demod_lowpass_cutoff = am_demod_lowpass_cutoff = 500
 
         ##################################################
         # Blocks
@@ -78,12 +88,12 @@ class vor_radio(gr.top_block, Qt.QWidget):
         self.monitoring_tabs_layout_0 = Qt.QBoxLayout(Qt.QBoxLayout.TopToBottom, self.monitoring_tabs_widget_0)
         self.monitoring_tabs_grid_layout_0 = Qt.QGridLayout()
         self.monitoring_tabs_layout_0.addLayout(self.monitoring_tabs_grid_layout_0)
-        self.monitoring_tabs.addTab(self.monitoring_tabs_widget_0, "IF Signal")
+        self.monitoring_tabs.addTab(self.monitoring_tabs_widget_0, "Baseband")
         self.monitoring_tabs_widget_1 = Qt.QWidget()
         self.monitoring_tabs_layout_1 = Qt.QBoxLayout(Qt.QBoxLayout.TopToBottom, self.monitoring_tabs_widget_1)
         self.monitoring_tabs_grid_layout_1 = Qt.QGridLayout()
         self.monitoring_tabs_layout_1.addLayout(self.monitoring_tabs_grid_layout_1)
-        self.monitoring_tabs.addTab(self.monitoring_tabs_widget_1, "Baseband Signal")
+        self.monitoring_tabs.addTab(self.monitoring_tabs_widget_1, "Ident Signal")
         self.monitoring_tabs_widget_2 = Qt.QWidget()
         self.monitoring_tabs_layout_2 = Qt.QBoxLayout(Qt.QBoxLayout.TopToBottom, self.monitoring_tabs_widget_2)
         self.monitoring_tabs_grid_layout_2 = Qt.QGridLayout()
@@ -95,9 +105,61 @@ class vor_radio(gr.top_block, Qt.QWidget):
         self.monitoring_tabs_layout_3.addLayout(self.monitoring_tabs_grid_layout_3)
         self.monitoring_tabs.addTab(self.monitoring_tabs_widget_3, "Scratch")
         self.top_layout.addWidget(self.monitoring_tabs)
+        self.rational_resampler_xxx_0 = filter.rational_resampler_fff(
+                interpolation=1,
+                decimation=2**10 // 40,
+                taps=None,
+                fractional_bw=None,
+        )
+        self.qtgui_time_sink_x_2 = qtgui.time_sink_f(
+        	40 * 4, #size
+        	40, #samp_rate
+        	"", #name
+        	1 #number of inputs
+        )
+        self.qtgui_time_sink_x_2.set_update_time(0.10)
+        self.qtgui_time_sink_x_2.set_y_axis(-1, 1)
+        
+        self.qtgui_time_sink_x_2.set_y_label("Amplitude", "")
+        
+        self.qtgui_time_sink_x_2.enable_tags(-1, True)
+        self.qtgui_time_sink_x_2.set_trigger_mode(qtgui.TRIG_MODE_AUTO, qtgui.TRIG_SLOPE_POS, 0.1, 0.1, 0, "")
+        self.qtgui_time_sink_x_2.enable_autoscale(False)
+        self.qtgui_time_sink_x_2.enable_grid(False)
+        self.qtgui_time_sink_x_2.enable_control_panel(False)
+        
+        if not True:
+          self.qtgui_time_sink_x_2.disable_legend()
+        
+        labels = ["", "", "", "", "",
+                  "", "", "", "", ""]
+        widths = [1, 1, 1, 1, 1,
+                  1, 1, 1, 1, 1]
+        colors = ["blue", "red", "green", "black", "cyan",
+                  "magenta", "yellow", "dark red", "dark green", "blue"]
+        styles = [1, 1, 1, 1, 1,
+                  1, 1, 1, 1, 1]
+        markers = [-1, -1, -1, -1, -1,
+                   -1, -1, -1, -1, -1]
+        alphas = [1.0, 1.0, 1.0, 1.0, 1.0,
+                  1.0, 1.0, 1.0, 1.0, 1.0]
+        
+        for i in xrange(1):
+            if len(labels[i]) == 0:
+                self.qtgui_time_sink_x_2.set_line_label(i, "Data {0}".format(i))
+            else:
+                self.qtgui_time_sink_x_2.set_line_label(i, labels[i])
+            self.qtgui_time_sink_x_2.set_line_width(i, widths[i])
+            self.qtgui_time_sink_x_2.set_line_color(i, colors[i])
+            self.qtgui_time_sink_x_2.set_line_style(i, styles[i])
+            self.qtgui_time_sink_x_2.set_line_marker(i, markers[i])
+            self.qtgui_time_sink_x_2.set_line_alpha(i, alphas[i])
+        
+        self._qtgui_time_sink_x_2_win = sip.wrapinstance(self.qtgui_time_sink_x_2.pyqwidget(), Qt.QWidget)
+        self.monitoring_tabs_layout_1.addWidget(self._qtgui_time_sink_x_2_win)
         self.qtgui_time_sink_x_0 = qtgui.time_sink_f(
-        	2**9, #size
-        	2**9, #samp_rate
+        	tone_samp_rate, #size
+        	tone_samp_rate, #samp_rate
         	"Compared Signals", #name
         	2 #number of inputs
         )
@@ -145,8 +207,8 @@ class vor_radio(gr.top_block, Qt.QWidget):
         	1024, #fftsize
         	firdes.WIN_BLACKMAN_hARRIS, #wintype
         	0, #fc
-        	samp_rate, #bw
-        	"IF Signal", #name
+        	input_samp_rate, #bw
+        	"Baseband Signal", #name
         	True, #plotfreq
         	True, #plotwaterfall
         	False, #plottime
@@ -167,11 +229,11 @@ class vor_radio(gr.top_block, Qt.QWidget):
             1
         )
         self.qtgui_number_sink_0.set_update_time(0.10)
-        self.qtgui_number_sink_0.set_title("Detected Radial")
+        self.qtgui_number_sink_0.set_title("")
         
-        labels = ["", "", "", "", "",
+        labels = ["Radial", "", "", "", "",
                   "", "", "", "", ""]
-        units = ["", "", "", "", "",
+        units = ["degrees", "", "", "", "",
                  "", "", "", "", ""]
         colors = [("black", "black"), ("black", "black"), ("black", "black"), ("black", "black"), ("black", "black"),
                   ("black", "black"), ("black", "black"), ("black", "black"), ("black", "black"), ("black", "black")]
@@ -191,57 +253,69 @@ class vor_radio(gr.top_block, Qt.QWidget):
         self.qtgui_number_sink_0.enable_autoscale(False)
         self._qtgui_number_sink_0_win = sip.wrapinstance(self.qtgui_number_sink_0.pyqwidget(), Qt.QWidget)
         self.top_layout.addWidget(self._qtgui_number_sink_0_win)
+        self.low_pass_filter_1 = filter.fir_filter_ccf(1, firdes.low_pass(
+        	1, 2**10, 16, 16, firdes.WIN_HAMMING, 6.76))
         self.low_pass_filter_0 = filter.fir_filter_ccf(1, firdes.low_pass(
-        	1, samp_rate, 500, 400, firdes.WIN_HAMMING, 6.76))
-        self.freq_xlating_fir_filter_xxx_0 = filter.freq_xlating_fir_filter_ccf(samp_rate // 2**12, (firdes.low_pass(1000, samp_rate, 5000, 1000)), fm_freq, samp_rate)
-        self.fft_vxx_0_0 = fft.fft_vfc(512, True, (window.blackmanharris(512)), 1)
-        self.fft_vxx_0 = fft.fft_vfc(512, True, (window.blackmanharris(512)), 1)
+        	1, input_samp_rate, am_demod_lowpass_cutoff, am_demod_lowpass_width, firdes.WIN_HAMMING, 6.76))
+        self.freq_xlating_fir_filter_xxx_0_0 = filter.freq_xlating_fir_filter_ccf(input_samp_rate // 2**10, (firdes.low_pass(10000, input_samp_rate, 500, 500)), ident_freq, input_samp_rate)
+        self.freq_xlating_fir_filter_xxx_0 = filter.freq_xlating_fir_filter_ccf(input_samp_rate // fm_demod_samp_rate, (firdes.low_pass(1000, input_samp_rate, fm_lowpass_cutoff, fm_lowpass_width)), fm_ref_freq, input_samp_rate)
+        self.fft_vxx_0_0 = fft.fft_vfc(tone_samp_rate, True, (window.blackmanharris(tone_samp_rate)), 1)
+        self.fft_vxx_0 = fft.fft_vfc(tone_samp_rate, True, (window.blackmanharris(tone_samp_rate)), 1)
         self.dc_blocker_xx_1 = filter.dc_blocker_ff(32, True)
         self.dc_blocker_xx_0 = filter.dc_blocker_ff(32, True)
-        self.blocks_vector_to_stream_0_0 = blocks.vector_to_stream(gr.sizeof_gr_complex*1, 512)
-        self.blocks_vector_to_stream_0 = blocks.vector_to_stream(gr.sizeof_gr_complex*1, 512)
-        self.blocks_throttle_0 = blocks.throttle(gr.sizeof_gr_complex*1, samp_rate,True)
+        self.blocks_vector_to_stream_0_0 = blocks.vector_to_stream(gr.sizeof_gr_complex*1, tone_samp_rate)
+        self.blocks_vector_to_stream_0 = blocks.vector_to_stream(gr.sizeof_gr_complex*1, tone_samp_rate)
+        self.blocks_throttle_0 = blocks.throttle(gr.sizeof_gr_complex*1, input_samp_rate,True)
+        self.blocks_threshold_ff_0 = blocks.threshold_ff(1, 1, 0)
         self.blocks_sub_xx_0 = blocks.sub_ff(1)
-        self.blocks_stream_to_vector_0_0 = blocks.stream_to_vector(gr.sizeof_float*1, 512)
-        self.blocks_stream_to_vector_0 = blocks.stream_to_vector(gr.sizeof_float*1, 512)
-        self.blocks_skiphead_0_0 = blocks.skiphead(gr.sizeof_gr_complex*1, 30)
-        self.blocks_skiphead_0 = blocks.skiphead(gr.sizeof_gr_complex*1, 30)
+        self.blocks_stream_to_vector_0_0 = blocks.stream_to_vector(gr.sizeof_float*1, tone_samp_rate)
+        self.blocks_stream_to_vector_0 = blocks.stream_to_vector(gr.sizeof_float*1, tone_samp_rate)
+        self.blocks_skiphead_0_0 = blocks.skiphead(gr.sizeof_gr_complex*1, tone_freq)
+        self.blocks_skiphead_0 = blocks.skiphead(gr.sizeof_gr_complex*1, tone_freq)
         self.blocks_multiply_const_vxx_1 = blocks.multiply_const_vff((180 / math.pi, ))
-        self.blocks_keep_one_in_n_0_0 = blocks.keep_one_in_n(gr.sizeof_gr_complex*1, 512)
-        self.blocks_keep_one_in_n_0 = blocks.keep_one_in_n(gr.sizeof_gr_complex*1, 512)
+        self.blocks_multiply_const_vxx_0 = blocks.multiply_const_vff((500, ))
+        self.blocks_keep_one_in_n_0_0 = blocks.keep_one_in_n(gr.sizeof_gr_complex*1, tone_samp_rate)
+        self.blocks_keep_one_in_n_0 = blocks.keep_one_in_n(gr.sizeof_gr_complex*1, tone_samp_rate)
+        self.blocks_float_to_uchar_0 = blocks.float_to_uchar()
         self.blocks_file_source_0 = blocks.file_source(gr.sizeof_gr_complex*1, "/home/brian/gnur-projects/gr-vor/sample_data/RBT_VOR_Sample_32768kHz.raw", True)
-        self.blocks_delay_0 = blocks.delay(gr.sizeof_gr_complex*1, 83)
+        self.blocks_delay_0 = blocks.delay(gr.sizeof_gr_complex*1, 82)
+        self.blocks_complex_to_mag_squared_0 = blocks.complex_to_mag_squared(1)
         self.blocks_complex_to_arg_0_0 = blocks.complex_to_arg(1)
         self.blocks_complex_to_arg_0 = blocks.complex_to_arg(1)
         self.band_pass_filter_0_0_0 = filter.fir_filter_fff(1, firdes.band_pass(
-        	1, 2**9, 25, 35, 5, firdes.WIN_HAMMING, 6.76))
-        self.band_pass_filter_0_0 = filter.fir_filter_fff(samp_rate // 2**9, firdes.band_pass(
-        	800, samp_rate, signal_f - 5, signal_f + 5, 5, firdes.WIN_HAMMING, 6.76))
-        self.analog_pll_carriertracking_cc_0_0 = analog.pll_carriertracking_cc((1.5 * math.pi)/200, utility.hz_to_rad_per_sample(100, samp_rate), utility.hz_to_rad_per_sample(-100, samp_rate))
+        	1, tone_samp_rate, tone_freq - tone_bandpass_width, tone_freq + tone_bandpass_width, tone_bandpass_width, firdes.WIN_HAMMING, 6.76))
+        self.band_pass_filter_0_0 = filter.fir_filter_fff(input_samp_rate // tone_samp_rate, firdes.band_pass(
+        	800, input_samp_rate, tone_freq - tone_bandpass_width, tone_freq + tone_bandpass_width, tone_bandpass_width, firdes.WIN_HAMMING, 6.76))
+        self.analog_pll_carriertracking_cc_0_0 = analog.pll_carriertracking_cc(pll_bandwidth, utility.hz_to_rad_per_sample(pll_tracking_range, input_samp_rate), utility.hz_to_rad_per_sample(-pll_tracking_range, input_samp_rate))
         self.analog_fm_demod_cf_0 = analog.fm_demod_cf(
-        	channel_rate=2**12,
-        	audio_decim=2**12 // 2**9,
-        	deviation=fm_deviation,
-        	audio_pass=30,
-        	audio_stop=60,
+        	channel_rate=fm_demod_samp_rate,
+        	audio_decim=fm_demod_samp_rate // tone_samp_rate,
+        	deviation=fm_ref_deviation,
+        	audio_pass=tone_freq,
+        	audio_stop=tone_freq * 2,
         	gain=1.0,
         	tau=0.0,
         )
         self.analog_am_demod_cf_0 = analog.am_demod_cf(
-        	channel_rate=samp_rate,
+        	channel_rate=input_samp_rate,
         	audio_decim=1,
-        	audio_pass=signal_f,
-        	audio_stop=signal_f * 2,
+        	audio_pass=tone_freq,
+        	audio_stop=tone_freq * 2,
         )
         self.analog_agc2_xx_0_0 = analog.agc2_ff(1e-1, 1e-2, 1.0, 1.0)
         self.analog_agc2_xx_0_0.set_max_gain(65536)
         self.analog_agc2_xx_0 = analog.agc2_ff(1e-1, 1e-2, 1.0, 1)
         self.analog_agc2_xx_0.set_max_gain(65536)
         self.airnav_unitcircle_ff_0 = airnav.unitcircle_ff()
+        self.airnav_qt_ident_0 = self.airnav_qt_ident_0 = airnav.qt_ident()
+        self.top_layout.addWidget(self.airnav_qt_ident_0)
+          
+        self.airnav_morse_decode_0 = airnav.morse_decode(8, 40)
 
         ##################################################
         # Connections
         ##################################################
+        self.msg_connect((self.airnav_morse_decode_0, 'out'), (self.airnav_qt_ident_0, 'in'))    
         self.connect((self.airnav_unitcircle_ff_0, 0), (self.blocks_multiply_const_vxx_1, 0))    
         self.connect((self.analog_agc2_xx_0, 0), (self.blocks_stream_to_vector_0_0, 0))    
         self.connect((self.analog_agc2_xx_0, 0), (self.qtgui_time_sink_x_0, 1))    
@@ -251,21 +325,27 @@ class vor_radio(gr.top_block, Qt.QWidget):
         self.connect((self.analog_fm_demod_cf_0, 0), (self.band_pass_filter_0_0_0, 0))    
         self.connect((self.analog_pll_carriertracking_cc_0_0, 0), (self.blocks_delay_0, 0))    
         self.connect((self.analog_pll_carriertracking_cc_0_0, 0), (self.freq_xlating_fir_filter_xxx_0, 0))    
+        self.connect((self.analog_pll_carriertracking_cc_0_0, 0), (self.freq_xlating_fir_filter_xxx_0_0, 0))    
         self.connect((self.analog_pll_carriertracking_cc_0_0, 0), (self.qtgui_sink_x_0, 0))    
         self.connect((self.band_pass_filter_0_0, 0), (self.dc_blocker_xx_0, 0))    
         self.connect((self.band_pass_filter_0_0_0, 0), (self.dc_blocker_xx_1, 0))    
         self.connect((self.blocks_complex_to_arg_0, 0), (self.blocks_sub_xx_0, 1))    
         self.connect((self.blocks_complex_to_arg_0_0, 0), (self.blocks_sub_xx_0, 0))    
+        self.connect((self.blocks_complex_to_mag_squared_0, 0), (self.blocks_multiply_const_vxx_0, 0))    
         self.connect((self.blocks_delay_0, 0), (self.low_pass_filter_0, 0))    
         self.connect((self.blocks_file_source_0, 0), (self.blocks_throttle_0, 0))    
+        self.connect((self.blocks_float_to_uchar_0, 0), (self.airnav_morse_decode_0, 0))    
         self.connect((self.blocks_keep_one_in_n_0, 0), (self.blocks_complex_to_arg_0, 0))    
         self.connect((self.blocks_keep_one_in_n_0_0, 0), (self.blocks_complex_to_arg_0_0, 0))    
+        self.connect((self.blocks_multiply_const_vxx_0, 0), (self.rational_resampler_xxx_0, 0))    
         self.connect((self.blocks_multiply_const_vxx_1, 0), (self.qtgui_number_sink_0, 0))    
         self.connect((self.blocks_skiphead_0, 0), (self.blocks_keep_one_in_n_0, 0))    
         self.connect((self.blocks_skiphead_0_0, 0), (self.blocks_keep_one_in_n_0_0, 0))    
         self.connect((self.blocks_stream_to_vector_0, 0), (self.fft_vxx_0, 0))    
         self.connect((self.blocks_stream_to_vector_0_0, 0), (self.fft_vxx_0_0, 0))    
         self.connect((self.blocks_sub_xx_0, 0), (self.airnav_unitcircle_ff_0, 0))    
+        self.connect((self.blocks_threshold_ff_0, 0), (self.blocks_float_to_uchar_0, 0))    
+        self.connect((self.blocks_threshold_ff_0, 0), (self.qtgui_time_sink_x_2, 0))    
         self.connect((self.blocks_throttle_0, 0), (self.analog_pll_carriertracking_cc_0_0, 0))    
         self.connect((self.blocks_vector_to_stream_0, 0), (self.blocks_skiphead_0, 0))    
         self.connect((self.blocks_vector_to_stream_0_0, 0), (self.blocks_skiphead_0_0, 0))    
@@ -274,7 +354,10 @@ class vor_radio(gr.top_block, Qt.QWidget):
         self.connect((self.fft_vxx_0, 0), (self.blocks_vector_to_stream_0, 0))    
         self.connect((self.fft_vxx_0_0, 0), (self.blocks_vector_to_stream_0_0, 0))    
         self.connect((self.freq_xlating_fir_filter_xxx_0, 0), (self.analog_fm_demod_cf_0, 0))    
+        self.connect((self.freq_xlating_fir_filter_xxx_0_0, 0), (self.low_pass_filter_1, 0))    
         self.connect((self.low_pass_filter_0, 0), (self.analog_am_demod_cf_0, 0))    
+        self.connect((self.low_pass_filter_1, 0), (self.blocks_complex_to_mag_squared_0, 0))    
+        self.connect((self.rational_resampler_xxx_0, 0), (self.blocks_threshold_ff_0, 0))    
 
     def closeEvent(self, event):
         self.settings = Qt.QSettings("GNU Radio", "vor_radio")
@@ -282,38 +365,114 @@ class vor_radio(gr.top_block, Qt.QWidget):
         event.accept()
 
 
-    def get_signal_f(self):
-        return self.signal_f
+    def get_tone_samp_rate(self):
+        return self.tone_samp_rate
 
-    def set_signal_f(self, signal_f):
-        self.signal_f = signal_f
-        self.band_pass_filter_0_0.set_taps(firdes.band_pass(800, self.samp_rate, self.signal_f - 5, self.signal_f + 5, 5, firdes.WIN_HAMMING, 6.76))
+    def set_tone_samp_rate(self, tone_samp_rate):
+        self.tone_samp_rate = tone_samp_rate
+        self.band_pass_filter_0_0_0.set_taps(firdes.band_pass(1, self.tone_samp_rate, self.tone_freq - self.tone_bandpass_width, self.tone_freq + self.tone_bandpass_width, self.tone_bandpass_width, firdes.WIN_HAMMING, 6.76))
+        self.blocks_keep_one_in_n_0.set_n(self.tone_samp_rate)
+        self.blocks_keep_one_in_n_0_0.set_n(self.tone_samp_rate)
+        self.qtgui_time_sink_x_0.set_samp_rate(self.tone_samp_rate)
 
-    def get_samp_rate(self):
-        return self.samp_rate
+    def get_tone_freq(self):
+        return self.tone_freq
 
-    def set_samp_rate(self, samp_rate):
-        self.samp_rate = samp_rate
-        self.analog_pll_carriertracking_cc_0_0.set_max_freq(utility.hz_to_rad_per_sample(100, self.samp_rate))
-        self.analog_pll_carriertracking_cc_0_0.set_min_freq(utility.hz_to_rad_per_sample(-100, self.samp_rate))
-        self.blocks_throttle_0.set_sample_rate(self.samp_rate)
-        self.qtgui_sink_x_0.set_frequency_range(0, self.samp_rate)
-        self.low_pass_filter_0.set_taps(firdes.low_pass(1, self.samp_rate, 500, 400, firdes.WIN_HAMMING, 6.76))
-        self.freq_xlating_fir_filter_xxx_0.set_taps((firdes.low_pass(1000, self.samp_rate, 5000, 1000)))
-        self.band_pass_filter_0_0.set_taps(firdes.band_pass(800, self.samp_rate, self.signal_f - 5, self.signal_f + 5, 5, firdes.WIN_HAMMING, 6.76))
+    def set_tone_freq(self, tone_freq):
+        self.tone_freq = tone_freq
+        self.band_pass_filter_0_0.set_taps(firdes.band_pass(800, self.input_samp_rate, self.tone_freq - self.tone_bandpass_width, self.tone_freq + self.tone_bandpass_width, self.tone_bandpass_width, firdes.WIN_HAMMING, 6.76))
+        self.band_pass_filter_0_0_0.set_taps(firdes.band_pass(1, self.tone_samp_rate, self.tone_freq - self.tone_bandpass_width, self.tone_freq + self.tone_bandpass_width, self.tone_bandpass_width, firdes.WIN_HAMMING, 6.76))
 
-    def get_fm_freq(self):
-        return self.fm_freq
+    def get_tone_bandpass_width(self):
+        return self.tone_bandpass_width
 
-    def set_fm_freq(self, fm_freq):
-        self.fm_freq = fm_freq
-        self.freq_xlating_fir_filter_xxx_0.set_center_freq(self.fm_freq)
+    def set_tone_bandpass_width(self, tone_bandpass_width):
+        self.tone_bandpass_width = tone_bandpass_width
+        self.band_pass_filter_0_0.set_taps(firdes.band_pass(800, self.input_samp_rate, self.tone_freq - self.tone_bandpass_width, self.tone_freq + self.tone_bandpass_width, self.tone_bandpass_width, firdes.WIN_HAMMING, 6.76))
+        self.band_pass_filter_0_0_0.set_taps(firdes.band_pass(1, self.tone_samp_rate, self.tone_freq - self.tone_bandpass_width, self.tone_freq + self.tone_bandpass_width, self.tone_bandpass_width, firdes.WIN_HAMMING, 6.76))
 
-    def get_fm_deviation(self):
-        return self.fm_deviation
+    def get_pll_tracking_range(self):
+        return self.pll_tracking_range
 
-    def set_fm_deviation(self, fm_deviation):
-        self.fm_deviation = fm_deviation
+    def set_pll_tracking_range(self, pll_tracking_range):
+        self.pll_tracking_range = pll_tracking_range
+        self.analog_pll_carriertracking_cc_0_0.set_max_freq(utility.hz_to_rad_per_sample(self.pll_tracking_range, self.input_samp_rate))
+        self.analog_pll_carriertracking_cc_0_0.set_min_freq(utility.hz_to_rad_per_sample(-self.pll_tracking_range, self.input_samp_rate))
+
+    def get_pll_bandwidth(self):
+        return self.pll_bandwidth
+
+    def set_pll_bandwidth(self, pll_bandwidth):
+        self.pll_bandwidth = pll_bandwidth
+        self.analog_pll_carriertracking_cc_0_0.set_loop_bandwidth(self.pll_bandwidth)
+
+    def get_input_samp_rate(self):
+        return self.input_samp_rate
+
+    def set_input_samp_rate(self, input_samp_rate):
+        self.input_samp_rate = input_samp_rate
+        self.analog_pll_carriertracking_cc_0_0.set_max_freq(utility.hz_to_rad_per_sample(self.pll_tracking_range, self.input_samp_rate))
+        self.analog_pll_carriertracking_cc_0_0.set_min_freq(utility.hz_to_rad_per_sample(-self.pll_tracking_range, self.input_samp_rate))
+        self.band_pass_filter_0_0.set_taps(firdes.band_pass(800, self.input_samp_rate, self.tone_freq - self.tone_bandpass_width, self.tone_freq + self.tone_bandpass_width, self.tone_bandpass_width, firdes.WIN_HAMMING, 6.76))
+        self.blocks_throttle_0.set_sample_rate(self.input_samp_rate)
+        self.freq_xlating_fir_filter_xxx_0.set_taps((firdes.low_pass(1000, self.input_samp_rate, self.fm_lowpass_cutoff, self.fm_lowpass_width)))
+        self.freq_xlating_fir_filter_xxx_0_0.set_taps((firdes.low_pass(10000, self.input_samp_rate, 500, 500)))
+        self.low_pass_filter_0.set_taps(firdes.low_pass(1, self.input_samp_rate, self.am_demod_lowpass_cutoff, self.am_demod_lowpass_width, firdes.WIN_HAMMING, 6.76))
+        self.qtgui_sink_x_0.set_frequency_range(0, self.input_samp_rate)
+
+    def get_ident_freq(self):
+        return self.ident_freq
+
+    def set_ident_freq(self, ident_freq):
+        self.ident_freq = ident_freq
+        self.freq_xlating_fir_filter_xxx_0_0.set_center_freq(self.ident_freq)
+
+    def get_fm_ref_freq(self):
+        return self.fm_ref_freq
+
+    def set_fm_ref_freq(self, fm_ref_freq):
+        self.fm_ref_freq = fm_ref_freq
+        self.freq_xlating_fir_filter_xxx_0.set_center_freq(self.fm_ref_freq)
+
+    def get_fm_ref_deviation(self):
+        return self.fm_ref_deviation
+
+    def set_fm_ref_deviation(self, fm_ref_deviation):
+        self.fm_ref_deviation = fm_ref_deviation
+
+    def get_fm_lowpass_width(self):
+        return self.fm_lowpass_width
+
+    def set_fm_lowpass_width(self, fm_lowpass_width):
+        self.fm_lowpass_width = fm_lowpass_width
+        self.freq_xlating_fir_filter_xxx_0.set_taps((firdes.low_pass(1000, self.input_samp_rate, self.fm_lowpass_cutoff, self.fm_lowpass_width)))
+
+    def get_fm_lowpass_cutoff(self):
+        return self.fm_lowpass_cutoff
+
+    def set_fm_lowpass_cutoff(self, fm_lowpass_cutoff):
+        self.fm_lowpass_cutoff = fm_lowpass_cutoff
+        self.freq_xlating_fir_filter_xxx_0.set_taps((firdes.low_pass(1000, self.input_samp_rate, self.fm_lowpass_cutoff, self.fm_lowpass_width)))
+
+    def get_fm_demod_samp_rate(self):
+        return self.fm_demod_samp_rate
+
+    def set_fm_demod_samp_rate(self, fm_demod_samp_rate):
+        self.fm_demod_samp_rate = fm_demod_samp_rate
+
+    def get_am_demod_lowpass_width(self):
+        return self.am_demod_lowpass_width
+
+    def set_am_demod_lowpass_width(self, am_demod_lowpass_width):
+        self.am_demod_lowpass_width = am_demod_lowpass_width
+        self.low_pass_filter_0.set_taps(firdes.low_pass(1, self.input_samp_rate, self.am_demod_lowpass_cutoff, self.am_demod_lowpass_width, firdes.WIN_HAMMING, 6.76))
+
+    def get_am_demod_lowpass_cutoff(self):
+        return self.am_demod_lowpass_cutoff
+
+    def set_am_demod_lowpass_cutoff(self, am_demod_lowpass_cutoff):
+        self.am_demod_lowpass_cutoff = am_demod_lowpass_cutoff
+        self.low_pass_filter_0.set_taps(firdes.low_pass(1, self.input_samp_rate, self.am_demod_lowpass_cutoff, self.am_demod_lowpass_width, firdes.WIN_HAMMING, 6.76))
 
 
 def main(top_block_cls=vor_radio, options=None):
