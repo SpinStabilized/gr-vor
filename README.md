@@ -1,6 +1,6 @@
 # gr-vor
 
-A VOR radio built on GNU Radio. More to come. Probably merge as an example or an app in my [gr-airnav][1] library in the near future.
+A VOR radio built on GNU Radio. More to come. Probably merge as an example or an app in my [gr-airnav][1] library in the near future. The `VOR_flowgraph.png` file in the images directory shows an overview snapshot of a working version of the flow so folks can look at it without having to download the flowgraph first. I wil try to keep this current to any major structural changes but can't promise it will stay up to date as I am continuing a lot of development work.
 
 ## Phase Shift Note
 
@@ -46,8 +46,7 @@ Planning to gather some more sample files for testing (as well as field test) so
 
 * `sample_data/RBT_VOR_Sample_32768kHz.raw`
 
-  Sourced from the wave file sample on the website of [sylvain (F4GKR)][4]. Down-sampled to 32.768 kHz and saved as a complex, GNURadio compatible file. Source VOR is the [Rambouillet VOR][5] in France. Identifier RBT (.-. -... -). I estimate the radial the data is taken from based on the website as being 291 deg (magnetic).
-
+  Sourced from the wave file sample on the website of [sylvain (F4GKR)][4]. Down-sampled to 32,768 samples/second and saved as a complex, GNURadio compatible file. Source VOR is the [Rambouillet VOR][5] in France. The identifier is RBT (.-. -... -). I estimate the radial the data is taken from based on the website as being 291 deg (magnetic). I've used this for phase-delay calibrations but we'll see how accurate I am when I take the radio out to capture more data.
 
 
 ## VOR Signal Reference

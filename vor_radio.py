@@ -5,7 +5,7 @@
 # Title: VOR Radio
 # Author: Brian McLaughlin
 # Description: Decodes a VOR signal
-# Generated: Fri Dec 16 19:17:16 2016
+# Generated: Fri Dec 16 20:08:37 2016
 ##################################################
 
 if __name__ == '__main__':
@@ -105,12 +105,59 @@ class vor_radio(gr.top_block, Qt.QWidget):
         self.monitoring_tabs_layout_3.addLayout(self.monitoring_tabs_grid_layout_3)
         self.monitoring_tabs.addTab(self.monitoring_tabs_widget_3, "Scratch")
         self.top_layout.addWidget(self.monitoring_tabs)
+        self.baseband_tabs = Qt.QTabWidget()
+        self.baseband_tabs_widget_0 = Qt.QWidget()
+        self.baseband_tabs_layout_0 = Qt.QBoxLayout(Qt.QBoxLayout.TopToBottom, self.baseband_tabs_widget_0)
+        self.baseband_tabs_grid_layout_0 = Qt.QGridLayout()
+        self.baseband_tabs_layout_0.addLayout(self.baseband_tabs_grid_layout_0)
+        self.baseband_tabs.addTab(self.baseband_tabs_widget_0, "Spectrum")
+        self.baseband_tabs_widget_1 = Qt.QWidget()
+        self.baseband_tabs_layout_1 = Qt.QBoxLayout(Qt.QBoxLayout.TopToBottom, self.baseband_tabs_widget_1)
+        self.baseband_tabs_grid_layout_1 = Qt.QGridLayout()
+        self.baseband_tabs_layout_1.addLayout(self.baseband_tabs_grid_layout_1)
+        self.baseband_tabs.addTab(self.baseband_tabs_widget_1, "Waterfall")
+        self.monitoring_tabs_layout_0.addWidget(self.baseband_tabs)
         self.rational_resampler_xxx_0 = filter.rational_resampler_fff(
                 interpolation=1,
                 decimation=2**10 // 40,
                 taps=None,
                 fractional_bw=None,
         )
+        self.qtgui_waterfall_sink_x_0 = qtgui.waterfall_sink_c(
+        	1024, #size
+        	firdes.WIN_BLACKMAN_hARRIS, #wintype
+        	0, #fc
+        	input_samp_rate, #bw
+        	"VOR Baseband Waterfall", #name
+                1 #number of inputs
+        )
+        self.qtgui_waterfall_sink_x_0.set_update_time(0.10)
+        self.qtgui_waterfall_sink_x_0.enable_grid(False)
+        
+        if not True:
+          self.qtgui_waterfall_sink_x_0.disable_legend()
+        
+        if "complex" == "float" or "complex" == "msg_float":
+          self.qtgui_waterfall_sink_x_0.set_plot_pos_half(not True)
+        
+        labels = ["", "", "", "", "",
+                  "", "", "", "", ""]
+        colors = [6, 0, 0, 0, 0,
+                  0, 0, 0, 0, 0]
+        alphas = [1.0, 1.0, 1.0, 1.0, 1.0,
+                  1.0, 1.0, 1.0, 1.0, 1.0]
+        for i in xrange(1):
+            if len(labels[i]) == 0:
+                self.qtgui_waterfall_sink_x_0.set_line_label(i, "Data {0}".format(i))
+            else:
+                self.qtgui_waterfall_sink_x_0.set_line_label(i, labels[i])
+            self.qtgui_waterfall_sink_x_0.set_color_map(i, colors[i])
+            self.qtgui_waterfall_sink_x_0.set_line_alpha(i, alphas[i])
+        
+        self.qtgui_waterfall_sink_x_0.set_intensity_range(-130, -60)
+        
+        self._qtgui_waterfall_sink_x_0_win = sip.wrapinstance(self.qtgui_waterfall_sink_x_0.pyqwidget(), Qt.QWidget)
+        self.baseband_tabs_layout_1.addWidget(self._qtgui_waterfall_sink_x_0_win)
         self.qtgui_time_sink_x_2 = qtgui.time_sink_f(
         	40 * 4, #size
         	40, #samp_rate
@@ -118,7 +165,7 @@ class vor_radio(gr.top_block, Qt.QWidget):
         	1 #number of inputs
         )
         self.qtgui_time_sink_x_2.set_update_time(0.10)
-        self.qtgui_time_sink_x_2.set_y_axis(-1, 1)
+        self.qtgui_time_sink_x_2.set_y_axis(-2.5, 2.5)
         
         self.qtgui_time_sink_x_2.set_y_label("Amplitude", "")
         
@@ -164,7 +211,7 @@ class vor_radio(gr.top_block, Qt.QWidget):
         	2 #number of inputs
         )
         self.qtgui_time_sink_x_0.set_update_time(0.10)
-        self.qtgui_time_sink_x_0.set_y_axis(-1, 1)
+        self.qtgui_time_sink_x_0.set_y_axis(-25, 25)
         
         self.qtgui_time_sink_x_0.set_y_label("Amplitude", "")
         
@@ -203,25 +250,6 @@ class vor_radio(gr.top_block, Qt.QWidget):
         
         self._qtgui_time_sink_x_0_win = sip.wrapinstance(self.qtgui_time_sink_x_0.pyqwidget(), Qt.QWidget)
         self.monitoring_tabs_layout_2.addWidget(self._qtgui_time_sink_x_0_win)
-        self.qtgui_sink_x_0 = qtgui.sink_c(
-        	1024, #fftsize
-        	firdes.WIN_BLACKMAN_hARRIS, #wintype
-        	0, #fc
-        	input_samp_rate, #bw
-        	"Baseband Signal", #name
-        	True, #plotfreq
-        	True, #plotwaterfall
-        	False, #plottime
-        	False, #plotconst
-        )
-        self.qtgui_sink_x_0.set_update_time(1.0/10)
-        self._qtgui_sink_x_0_win = sip.wrapinstance(self.qtgui_sink_x_0.pyqwidget(), Qt.QWidget)
-        self.monitoring_tabs_layout_0.addWidget(self._qtgui_sink_x_0_win)
-        
-        self.qtgui_sink_x_0.enable_rf_freq(False)
-        
-        
-          
         self.qtgui_number_sink_0 = qtgui.number_sink(
             gr.sizeof_float,
             0,
@@ -253,6 +281,47 @@ class vor_radio(gr.top_block, Qt.QWidget):
         self.qtgui_number_sink_0.enable_autoscale(False)
         self._qtgui_number_sink_0_win = sip.wrapinstance(self.qtgui_number_sink_0.pyqwidget(), Qt.QWidget)
         self.top_layout.addWidget(self._qtgui_number_sink_0_win)
+        self.qtgui_freq_sink_x_0 = qtgui.freq_sink_c(
+        	1024, #size
+        	firdes.WIN_BLACKMAN_hARRIS, #wintype
+        	0, #fc
+        	input_samp_rate, #bw
+        	"VOR Baseband Signal", #name
+        	1 #number of inputs
+        )
+        self.qtgui_freq_sink_x_0.set_update_time(0.10)
+        self.qtgui_freq_sink_x_0.set_y_axis(-150, -60)
+        self.qtgui_freq_sink_x_0.set_trigger_mode(qtgui.TRIG_MODE_FREE, 0.0, 0, "")
+        self.qtgui_freq_sink_x_0.enable_autoscale(False)
+        self.qtgui_freq_sink_x_0.enable_grid(False)
+        self.qtgui_freq_sink_x_0.set_fft_average(1.0)
+        self.qtgui_freq_sink_x_0.enable_control_panel(False)
+        
+        if not True:
+          self.qtgui_freq_sink_x_0.disable_legend()
+        
+        if "complex" == "float" or "complex" == "msg_float":
+          self.qtgui_freq_sink_x_0.set_plot_pos_half(not True)
+        
+        labels = ["", "", "", "", "",
+                  "", "", "", "", ""]
+        widths = [1, 1, 1, 1, 1,
+                  1, 1, 1, 1, 1]
+        colors = ["blue", "red", "green", "black", "cyan",
+                  "magenta", "yellow", "dark red", "dark green", "dark blue"]
+        alphas = [1.0, 1.0, 1.0, 1.0, 1.0,
+                  1.0, 1.0, 1.0, 1.0, 1.0]
+        for i in xrange(1):
+            if len(labels[i]) == 0:
+                self.qtgui_freq_sink_x_0.set_line_label(i, "Data {0}".format(i))
+            else:
+                self.qtgui_freq_sink_x_0.set_line_label(i, labels[i])
+            self.qtgui_freq_sink_x_0.set_line_width(i, widths[i])
+            self.qtgui_freq_sink_x_0.set_line_color(i, colors[i])
+            self.qtgui_freq_sink_x_0.set_line_alpha(i, alphas[i])
+        
+        self._qtgui_freq_sink_x_0_win = sip.wrapinstance(self.qtgui_freq_sink_x_0.pyqwidget(), Qt.QWidget)
+        self.baseband_tabs_layout_0.addWidget(self._qtgui_freq_sink_x_0_win)
         self.low_pass_filter_1 = filter.fir_filter_ccf(1, firdes.low_pass(
         	1, 2**10, 16, 16, firdes.WIN_HAMMING, 6.76))
         self.low_pass_filter_0 = filter.fir_filter_ccf(1, firdes.low_pass(
@@ -310,7 +379,7 @@ class vor_radio(gr.top_block, Qt.QWidget):
         self.airnav_qt_ident_0 = self.airnav_qt_ident_0 = airnav.qt_ident()
         self.top_layout.addWidget(self.airnav_qt_ident_0)
           
-        self.airnav_morse_decode_0 = airnav.morse_decode(8, 40)
+        self.airnav_morse_decode_0 = airnav.morse_decode(10, 40)
 
         ##################################################
         # Connections
@@ -326,7 +395,8 @@ class vor_radio(gr.top_block, Qt.QWidget):
         self.connect((self.analog_pll_carriertracking_cc_0_0, 0), (self.blocks_delay_0, 0))    
         self.connect((self.analog_pll_carriertracking_cc_0_0, 0), (self.freq_xlating_fir_filter_xxx_0, 0))    
         self.connect((self.analog_pll_carriertracking_cc_0_0, 0), (self.freq_xlating_fir_filter_xxx_0_0, 0))    
-        self.connect((self.analog_pll_carriertracking_cc_0_0, 0), (self.qtgui_sink_x_0, 0))    
+        self.connect((self.analog_pll_carriertracking_cc_0_0, 0), (self.qtgui_freq_sink_x_0, 0))    
+        self.connect((self.analog_pll_carriertracking_cc_0_0, 0), (self.qtgui_waterfall_sink_x_0, 0))    
         self.connect((self.band_pass_filter_0_0, 0), (self.dc_blocker_xx_0, 0))    
         self.connect((self.band_pass_filter_0_0_0, 0), (self.dc_blocker_xx_1, 0))    
         self.connect((self.blocks_complex_to_arg_0, 0), (self.blocks_sub_xx_0, 1))    
@@ -370,10 +440,10 @@ class vor_radio(gr.top_block, Qt.QWidget):
 
     def set_tone_samp_rate(self, tone_samp_rate):
         self.tone_samp_rate = tone_samp_rate
-        self.band_pass_filter_0_0_0.set_taps(firdes.band_pass(1, self.tone_samp_rate, self.tone_freq - self.tone_bandpass_width, self.tone_freq + self.tone_bandpass_width, self.tone_bandpass_width, firdes.WIN_HAMMING, 6.76))
         self.blocks_keep_one_in_n_0.set_n(self.tone_samp_rate)
         self.blocks_keep_one_in_n_0_0.set_n(self.tone_samp_rate)
         self.qtgui_time_sink_x_0.set_samp_rate(self.tone_samp_rate)
+        self.band_pass_filter_0_0_0.set_taps(firdes.band_pass(1, self.tone_samp_rate, self.tone_freq - self.tone_bandpass_width, self.tone_freq + self.tone_bandpass_width, self.tone_bandpass_width, firdes.WIN_HAMMING, 6.76))
 
     def get_tone_freq(self):
         return self.tone_freq
@@ -411,14 +481,15 @@ class vor_radio(gr.top_block, Qt.QWidget):
 
     def set_input_samp_rate(self, input_samp_rate):
         self.input_samp_rate = input_samp_rate
-        self.analog_pll_carriertracking_cc_0_0.set_max_freq(utility.hz_to_rad_per_sample(self.pll_tracking_range, self.input_samp_rate))
-        self.analog_pll_carriertracking_cc_0_0.set_min_freq(utility.hz_to_rad_per_sample(-self.pll_tracking_range, self.input_samp_rate))
         self.band_pass_filter_0_0.set_taps(firdes.band_pass(800, self.input_samp_rate, self.tone_freq - self.tone_bandpass_width, self.tone_freq + self.tone_bandpass_width, self.tone_bandpass_width, firdes.WIN_HAMMING, 6.76))
-        self.blocks_throttle_0.set_sample_rate(self.input_samp_rate)
-        self.freq_xlating_fir_filter_xxx_0.set_taps((firdes.low_pass(1000, self.input_samp_rate, self.fm_lowpass_cutoff, self.fm_lowpass_width)))
         self.freq_xlating_fir_filter_xxx_0_0.set_taps((firdes.low_pass(10000, self.input_samp_rate, 500, 500)))
         self.low_pass_filter_0.set_taps(firdes.low_pass(1, self.input_samp_rate, self.am_demod_lowpass_cutoff, self.am_demod_lowpass_width, firdes.WIN_HAMMING, 6.76))
-        self.qtgui_sink_x_0.set_frequency_range(0, self.input_samp_rate)
+        self.freq_xlating_fir_filter_xxx_0.set_taps((firdes.low_pass(1000, self.input_samp_rate, self.fm_lowpass_cutoff, self.fm_lowpass_width)))
+        self.blocks_throttle_0.set_sample_rate(self.input_samp_rate)
+        self.analog_pll_carriertracking_cc_0_0.set_max_freq(utility.hz_to_rad_per_sample(self.pll_tracking_range, self.input_samp_rate))
+        self.analog_pll_carriertracking_cc_0_0.set_min_freq(utility.hz_to_rad_per_sample(-self.pll_tracking_range, self.input_samp_rate))
+        self.qtgui_waterfall_sink_x_0.set_frequency_range(0, self.input_samp_rate)
+        self.qtgui_freq_sink_x_0.set_frequency_range(0, self.input_samp_rate)
 
     def get_ident_freq(self):
         return self.ident_freq
