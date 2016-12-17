@@ -5,7 +5,7 @@
 # Title: VOR Radio
 # Author: Brian McLaughlin
 # Description: Decodes a VOR signal
-# Generated: Fri Dec 16 16:03:17 2016
+# Generated: Fri Dec 16 19:17:16 2016
 ##################################################
 
 if __name__ == '__main__':
