@@ -54,19 +54,13 @@ Planning to gather some more sample files for testing (as well as field test) so
 
 Referenced from the [Wikipedia VOR Article][3].
 
-|--------------------|--------------------------------------|----------|
 | GNURadio Variable  | Description                          | Value    |
-|====================|======================================|==========|
-| `tone_freq`        | Signal Tone                          | 30 Hz    |
-|--------------------|--------------------------------------|----------|
+|--------------------|--------------------------------------|---------:|
+| `tone_freq`        | Signal Tone                          | 30  Hz   |
 | `fm_ref_freq`      | FM Reference Tone Subcarrier         | 9960 kHz |
-|--------------------|--------------------------------------|----------|
-| `fm_ref_deviation` | FM Reference Tone Max Freq Deviation | 480 Hz   |
-|--------------------|--------------------------------------|----------|
-| `ident_freq`       | Morse Ident Tones Subcarrier         | 1020 Hz  |
-|--------------------|--------------------------------------|----------|
+| `fm_ref_deviation` | FM Reference Tone Max Freq Deviation | 480  Hz  |
+| `ident_freq`       | Morse Ident Tones Subcarrier         | 1020  Hz |
 
-## References
 
 [1]: https://github.com/SpinStabilized/gr-airnav
 [2]: http://gnuradio.org/doc/doxygen/classgr_1_1blocks_1_1delay.html
